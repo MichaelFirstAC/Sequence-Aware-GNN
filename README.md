@@ -5,10 +5,12 @@ This repository investigates whether adding protein amino acid sequence informat
 ## Project Structure
 
 ```
-project/
+Sequence-Aware-GNN/
 ├── data/
-│   ├── raw/                  # Downloaded FASTA and PrimeKG kg.csv
+│   ├── raw/                  # Downloaded FASTA
 │   └── processed/            # Cached ESM-2 embeddings and deduplicated edge lists
+├── dataset/                  # Contains the raw PrimeKG kg.csv (1GB data drop)
+├── legacy/                   # Older scripts and exploratory files backed up here
 ├── src/
 │   ├── utils.py              # Logging, configuration, and reproducibility (seeding)
 │   ├── data_prep.py          # Phase 1: KG edge extraction, UniProt ID mapping, FASTA fetching
@@ -18,7 +20,6 @@ project/
 │   ├── train.py              # Phase 5: Training loops and Ablation Studies
 │   ├── evaluate.py           # Evaluation metrics (AUC, F1, Recall, Precision@K)
 │   └── dti_task.py           # Phase 7: DTI extension (Davis/KIBA dataset loading and RDKit logic)
-├── notebooks/                # Exploratory Data Analysis and visualizations
 ├── results/                  # Saved metrics.csv and plots
 ├── config.yaml               # Hyperparameter and model configuration
 └── requirements.txt          # Python dependencies
@@ -40,7 +41,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Ensure the PrimeKG dataset (`kg.csv`) is downloaded and placed in the directory specified in `config.yaml` (default: `../dataset/kg.csv`).
+3. Ensure the PrimeKG dataset (`kg.csv`) is downloaded and placed in the directory specified in `config.yaml` (default: `dataset/kg.csv`).
 
 ## Running the Pipeline
 
