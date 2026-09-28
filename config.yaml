@@ -1,0 +1,23 @@
+project:
+  name: "Sequence-Aware GNN for PPI & DTI"
+  random_seed: 42
+  device: "cuda"
+
+data:
+  raw_kg_path: "dataset/kg.csv"
+  processed_dir: "data/processed"
+  raw_dir: "data/raw"
+  results_dir: "results"
+
+esm2:
+  model_name: "facebook/esm2_t12_35M_UR50D"
+  max_length: 1022
+  batch_size: 16
+
+training:
+  epochs: 50
+  lr: 0.01
+  hidden_dim: 64
+  dropout: 0.3
+  mc_dropout_passes: 100
+  patience: 10

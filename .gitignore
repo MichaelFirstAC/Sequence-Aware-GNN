@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Data and Models
+data/raw/
+data/processed/
+dataset/
+*.pt
+*.pth
+*.csv
+
+# Exceptions (Keep these directories but ignore contents)
+!data/
+!dataset/
+!results/
+
+# MLflow
+mlruns/
