@@ -16,7 +16,7 @@ This repository investigates whether adding protein amino acid sequence informat
 │   ├── models.py             # Phase 4: Model definitions (GCN, GAT, MLP)
 │   ├── train.py              # Phase 5: Training loops and Ablation Studies
 │   ├── evaluate.py           # Evaluation metrics (AUC, F1, Recall, Precision@K)
-│   └── dti_task.py           # Phase 7: DTI extension (Davis/KIBA dataset loading and RDKit logic)
+│   └── dti_task.py           # Phase 6: DTI extension (Davis/KIBA dataset loading and RDKit logic)
 ├── notebooks/                # Exploratory Data Analysis and visualizations
 ├── results/                  # Saved metrics.csv and plots
 ├── legacy/                   # Archived older draft scripts and images
@@ -64,7 +64,7 @@ python src/train.py
 ```
 Results will be saved as a CSV to the `results/` directory.
 
-### Phase 7: DTI Prediction (Extension)
+### Phase 6: DTI Prediction (Extension)
 To run the Drug-Target Interaction extension, which utilizes RDKit Morgan fingerprints and TDC (Therapeutics Data Commons) datasets (Davis/KIBA), use the DTI script:
 ```bash
 python src/dti_task.py
