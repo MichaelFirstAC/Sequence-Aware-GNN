@@ -1,13 +1,26 @@
 project:
-  name: "Sequence-Aware GNN for PPI & DTI"
+  name: "Sequence-Aware GNN for PPI Link Prediction"
   random_seed: 42
+  seeds: [42, 43, 44, 45, 46]
   device: "cuda"
 
 data:
+  dataset_name: "primekg"  # Switchable: "primekg" or "string"
   raw_kg_path: "dataset/kg.csv"
   processed_dir: "data/processed"
   raw_dir: "data/raw"
   results_dir: "results"
+  figures_dir: "results/figures"
+  classical_features_path: "data/processed/classical_features.pt"
+  esm2_embeddings_path: "data/processed/esm2_embeddings.pt"
+
+string:
+  taxon_id: 9606
+  score_threshold: 700
+  links_url: "https://stringdb-downloads.org/download/protein.physical.links.v12.0/9606.protein.physical.links.v12.0.txt.gz"
+  sequences_url: "https://stringdb-downloads.org/download/protein.sequences.v12.0/9606.protein.sequences.v12.0.fa.gz"
+  raw_links_path: "data/raw/9606.protein.physical.links.v12.0.txt.gz"
+  raw_sequences_path: "data/raw/9606.protein.sequences.v12.0.fa.gz"
 
 esm2:
   model_name: "facebook/esm2_t12_35M_UR50D"
@@ -19,5 +32,4 @@ training:
   lr: 0.01
   hidden_dim: 64
   dropout: 0.3
-  mc_dropout_passes: 100
   patience: 10
