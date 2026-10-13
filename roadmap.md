@@ -55,7 +55,7 @@
 
 ---
 
-### [/] Phase 6: Classical Sequence Features & Homology Check *(Current Phase)*
+### [x] Phase 6: Classical Sequence Features & Homology Check
 - [x] **Biopython Feature Extraction**:
   - 20-dimensional standard amino acid composition.
   - 8,000-dimensional 3-mer (tripeptide) frequency distribution, reduced to 64 dimensions via PCA (15.4% explained variance).
@@ -64,11 +64,11 @@
   - Performed 125,000 Smith-Waterman local alignments (`BLOSUM62`) comparing 500 cold test proteins against 250 training proteins.
   - Results: Mean max identity = **23.37% ± 6.88%**; **91.2% of test proteins have < 30% sequence identity** (confirming strict out-of-distribution evaluation in the twilight zone).
   - Saved raw distribution to `results/cold_split_identities.csv`.
-- [/] **Ablation Expansion**:
-  - GCN (Classical + Structure).
-  - Random Forest baseline (Classical pairwise concatenation).
-  - Logistic Regression baseline (Classical pairwise concatenation).
-  - Evaluating under both Random Split and Cold-Protein Split.
+- [x] **Ablation Expansion**:
+  - GCN (Classical + Structure): Random Split AUC **0.8896**, Cold Split AUC **0.8290**.
+  - Random Forest baseline (Classical pairwise concatenation): Random Split AUC **0.8204**, Cold Split AUC **0.6691**.
+  - Logistic Regression baseline (Classical pairwise concatenation): Random Split AUC **0.6791**, Cold Split AUC **0.6551**.
+  - Evaluated under both Random Split and Cold-Protein Split; results recorded in `results/metrics.csv`.
 
 ---
 
