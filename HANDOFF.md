@@ -23,7 +23,52 @@ Welcome to the project! This document outlines the current state of the codebase
 
 ---
 
-## 3. Strict Rules & Constraints (Course Requirements)
+## 3. Data Setup & File Placement (Required After Cloning)
+
+Because `.gitignore` excludes large `.pt` tensors and `.csv` data files, a fresh `git clone` only contains the source code. Download the shared Google Drive archive (`data/` and `results/`) and extract the files into the repository root so your directory matches this exact layout:
+
+| # | File | Size | Exact Destination Path (Inside Repo Root) | Purpose |
+| :- | :--- | :--- | :--- | :--- |
+| **1** | `esm2_embeddings.pt` | 38.3 MB | `data/processed/esm2_embeddings.pt` | Precomputed 480-dim ESM-2 embeddings (saves ~4h on CPU) |
+| **2** | `classical_features.pt` | 6.0 MB | `data/processed/classical_features.pt` | Precomputed 84-dim AA comp + 3-mer PCA features |
+| **3** | `ppi_edges_uniprot.csv` | 8.2 MB | `data/processed/ppi_edges_uniprot.csv` | Mapped PPI graph edge list (316,034 edges, 17,328 nodes) |
+| **4** | `ncbi_to_uniprot.csv` | 241 KB | `data/processed/ncbi_to_uniprot.csv` | NCBI Gene ID to UniProt accession lookup table |
+| **5** | `ppi_edges.csv` | 3.9 MB | `data/processed/ppi_edges.csv` | Raw extracted PPI edges before UniProt filtering |
+| **6** | `protein_sequences.fasta` | 12.4 MB | `data/raw/protein_sequences.fasta` | All 17,328 protein sequences + gene symbols (`GN=`) |
+| **7** | `metrics.csv` | 2 KB | `results/metrics.csv` | Phases 5 & 6 single-seed ablation results |
+| **8** | `cold_split_identities.csv` | 18 KB | `results/cold_split_identities.csv` | Smith-Waterman alignment scores (500 cold proteins) |
+| **9** | `cold_split_identity_summary.csv` | 1 KB | `results/cold_split_identity_summary.csv` | Summary statistics of the homology audit |
+
+*(Note: `dataset/kg.csv` (~1 GB) is **not** needed unless re-running Phase 1 from scratch, as all PPI edges are already extracted in `data/processed/ppi_edges_uniprot.csv`.)*
+
+### Expected Folder Structure After Extraction
+
+```text
+Sequence-Aware-GNN/
+├── data/
+│   ├── raw/
+│   │   └── protein_sequences.fasta          <-- From Google Drive
+│   └── processed/
+│       ├── esm2_embeddings.pt               <-- From Google Drive
+│       ├── classical_features.pt            <-- From Google Drive
+│       ├── ppi_edges_uniprot.csv            <-- From Google Drive
+│       ├── ppi_edges.csv                    <-- From Google Drive
+│       └── ncbi_to_uniprot.csv              <-- From Google Drive
+├── results/
+│   ├── metrics.csv                          <-- From Google Drive
+│   ├── cold_split_identities.csv            <-- From Google Drive
+│   └── cold_split_identity_summary.csv      <-- From Google Drive
+├── src/                                     (Tracked in Git)
+├── config.yaml                              (Tracked in Git)
+├── HANDOFF.md                               (Tracked in Git)
+├── roadmap.md                               (Tracked in Git)
+├── README.md                                (Tracked in Git)
+└── requirements.txt                         (Tracked in Git)
+```
+
+---
+
+## 4. Strict Rules & Constraints (Course Requirements)
 1. **DO NOT recompute ESM-2 embeddings**: The 480-dim embeddings for all 17,328 proteins took ~4 hours on CPU and are cached in `data/processed/esm2_embeddings.pt`. Always load from this file.
 2. **Deterministic Seed (42)**: Global seed must remain 42 across PyTorch, NumPy, and Python for all single-seed operations.
 3. **Honest Results (No Fabrication)**: Print real metrics, handle failures transparently.
@@ -32,7 +77,7 @@ Welcome to the project! This document outlines the current state of the codebase
 
 ---
 
-## 4. Known Technical Nuance: The Phase 5 Shared-Split Fix
+## 5. Known Technical Nuance: The Phase 5 Shared-Split Fix
 In the initial exploratory run of Phase 5, the random edge split and cold-protein split were sampled independently for Structure-Only vs ESM-2 models, causing slight edge discrepancies. 
 
 **This has already been fixed in `src/dataset.py`:**
@@ -42,7 +87,7 @@ In the initial exploratory run of Phase 5, the random edge split and cold-protei
 
 ---
 
-## 5. Next Steps Checklist
+## 6. Next Steps Checklist
 
 ### 🔹 Phase 7: Network Statistics & Significance Testing
 - **Script to create**: `src/network_analysis.py`
@@ -76,3 +121,4 @@ In the initial exploratory run of Phase 5, the random edge split and cold-protei
 - Create `run_all.ipynb` executing top-to-bottom in <10 mins on CPU using cached files.
 - Freeze `requirements.txt` with exact pinned versions.
 - Run file size audit to ensure no repository files exceed GitHub's 100 MB limit.
+
