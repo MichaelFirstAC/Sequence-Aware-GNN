@@ -7,11 +7,65 @@ import numpy as np
 import pandas as pd
 from torch_geometric.data import Data
 from torch_geometric.transforms import RandomLinkSplit
-from utils import setup_logger
+from utils import setup_logger, set_seed
 
 logger = setup_logger("dataset")
 
-def load_ppi_graph(edges_path, embeddings_path=None):
+def make_random_features(num_nodes, dim=64, seed=42):
+    """
+    Random node features for the structure-only baseline.
+    Uses a dedicated generator so it does not consume the global torch RNG
+    (which would otherwise change the edge splits drawn afterwards).
+    """
+    gen = torch.Generator().manual_seed(seed)
+    return torch.randn((num_nodes, dim), generator=gen)
+
+def load_node_features(embeddings_path, node_to_idx):
+    """
+    Builds a node feature matrix aligned with node_to_idx from a cached
+    {uniprot_id: tensor} dict (ESM-2 or classical features).
+    Proteins without a cached vector are initialized to zero.
+    """
+    logger.info(f"Loading node features from {embeddings_path}")
+    feat_dict = torch.load(embeddings_path)
+    dim = next(iter(feat_dict.values())).shape[0]
+    x = torch.zeros((len(node_to_idx), dim))
+    missing = 0
+    for prot, idx in node_to_idx.items():
+        if prot in feat_dict:
+            x[idx] = feat_dict[prot]
+        else:
+            missing += 1
+    if missing > 0:
+        logger.warning(f"Missing features for {missing} proteins (initialized to zero).")
+    return x
+
+def build_splits(edges_path, seed):
+    """
+    Builds the Random and Cold-Protein splits ONCE for a given seed.
+    Every feature setting must reuse these exact splits (via with_features)
+    so that models are compared on identical held-out proteins, edges, and negatives.
+
+    Returns: ({split_name: (train, val, test)}, node_to_idx, unique_proteins)
+    """
+    set_seed(seed)
+    graph, node_to_idx, unique_proteins = load_ppi_graph(edges_path, embeddings_path=None, seed=seed)
+    splits = {
+        "Random Split": create_random_split(graph),
+        "Cold-Protein Split": create_cold_protein_split(graph, unique_proteins, node_to_idx),
+    }
+    return splits, node_to_idx, unique_proteins
+
+def with_features(split, x):
+    """Returns copies of (train, val, test) with node features replaced by x; edges are untouched."""
+    out = []
+    for d in split:
+        d_new = d.clone()
+        d_new.x = x
+        out.append(d_new)
+    return tuple(out)
+
+def load_ppi_graph(edges_path, embeddings_path=None, seed=42):
     """
     Loads PPI edges and node features (ESM-2 embeddings if provided, else random).
     Returns a PyG Data object and node mappings.
@@ -48,7 +102,7 @@ def load_ppi_graph(edges_path, embeddings_path=None):
             logger.warning(f"Missing embeddings for {missing} proteins (initialized to zero).")
     else:
         logger.info("No embeddings provided. Using random 64-dim embeddings.")
-        x = torch.randn((num_nodes, 64))
+        x = make_random_features(num_nodes, 64, seed)
         
     data = Data(x=x, edge_index=edge_index)
     logger.info(f"Graph constructed: {data.num_nodes} nodes, {data.num_edges//2} undirected edges.")

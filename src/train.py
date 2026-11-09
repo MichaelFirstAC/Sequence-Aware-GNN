@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 import pandas as pd
 from utils import load_config, setup_logger, set_seed
-from dataset import load_ppi_graph, create_random_split, create_cold_protein_split
+from dataset import build_splits, with_features, make_random_features, load_node_features
 from models import GCNModel, GATModel, MLPModel
 from evaluate import compute_metrics
 
@@ -87,29 +87,28 @@ def run_experiment(model, train_data, val_data, test_data, config, device, name)
 
 def main():
     config = load_config("config.yaml")
-    set_seed(config["project"]["random_seed"])
+    seed = config["project"]["random_seed"]
     device = get_device(config)
     
     edges_path = os.path.join(config["data"]["processed_dir"], "ppi_edges_uniprot.csv")
     emb_path = os.path.join(config["data"]["processed_dir"], "esm2_embeddings.pt")
     
-    # 1. Structure Only (random node features)
-    graph_structure, node_to_idx, unique_proteins = load_ppi_graph(edges_path, embeddings_path=None)
+    # Build each split ONCE; every feature setting below reuses the identical split
+    # (same held-out proteins, same test edges, same negatives). Only node features differ.
+    splits, node_to_idx, unique_proteins = build_splits(edges_path, seed)
     
-    # 2. Sequence + Structure (ESM-2 node features)
-    graph_seq, _, _ = load_ppi_graph(edges_path, embeddings_path=emb_path)
+    # 1. Structure Only (random node features, carry no protein information)
+    x_struct = make_random_features(len(unique_proteins), 64, seed)
+    # 2. Sequence (ESM-2 node features)
+    x_seq = load_node_features(emb_path, node_to_idx)
     
     results = []
     
-    for split_name in ["Random Split", "Cold-Protein Split"]:
+    for split_name, base_split in splits.items():
         logger.info(f"========== SPLIT: {split_name} ==========")
         
-        if split_name == "Random Split":
-            train_struct, val_struct, test_struct = create_random_split(graph_structure)
-            train_seq, val_seq, test_seq = create_random_split(graph_seq)
-        else:
-            train_struct, val_struct, test_struct = create_cold_protein_split(graph_structure, unique_proteins, node_to_idx)
-            train_seq, val_seq, test_seq = create_cold_protein_split(graph_seq, unique_proteins, node_to_idx)
+        train_struct, val_struct, test_struct = with_features(base_split, x_struct)
+        train_seq, val_seq, test_seq = with_features(base_split, x_seq)
             
         in_dim = train_struct.x.size(1)
         seq_dim = train_seq.x.size(1)
@@ -140,10 +139,14 @@ def main():
         res3["Split"] = split_name
         results.append(res3)
 
-    # Save all results
+    # Save results, merging with existing rows (e.g. Phase 6) instead of overwriting them
     os.makedirs(config["data"]["results_dir"], exist_ok=True)
     results_df = pd.DataFrame(results)
     res_path = os.path.join(config["data"]["results_dir"], "metrics.csv")
+    if os.path.exists(res_path):
+        old_df = pd.read_csv(res_path)
+        results_df = pd.concat([old_df, results_df], ignore_index=True).drop_duplicates(
+            subset=["Model", "Features", "Split"], keep="last")
     results_df.to_csv(res_path, index=False)
     logger.info(f"All experiments finished. Results saved to {res_path}")
     print(results_df.to_string())

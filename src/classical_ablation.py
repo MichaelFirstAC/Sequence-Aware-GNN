@@ -18,7 +18,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 from utils import load_config, setup_logger, set_seed
-from dataset import load_ppi_graph, create_random_split, create_cold_protein_split
+from dataset import build_splits, with_features, load_node_features
 from models import GCNModel
 from evaluate import compute_metrics
 
@@ -126,24 +126,23 @@ def run_sklearn_experiment(model, train_data, test_data, name, is_lr=False):
 
 def main():
     config = load_config("config.yaml")
-    set_seed(config["project"]["random_seed"])
+    seed = config["project"]["random_seed"]
     device = get_device(config)
     
     edges_path = os.path.join(config["data"]["processed_dir"], "ppi_edges_uniprot.csv")
     classical_emb_path = os.path.join(config["data"]["processed_dir"], "classical_features.pt")
     
-    logger.info("Loading PPI graph with Classical (AA comp + 3-mer PCA) features...")
-    graph_classical, node_to_idx, unique_proteins = load_ppi_graph(edges_path, embeddings_path=classical_emb_path)
+    # Same splits as train.py (built once per seed); only node features differ.
+    splits, node_to_idx, unique_proteins = build_splits(edges_path, seed)
+    logger.info("Loading Classical (AA comp + 3-mer PCA) node features...")
+    x_classical = load_node_features(classical_emb_path, node_to_idx)
     
     new_results = []
     
-    for split_name in ["Random Split", "Cold-Protein Split"]:
+    for split_name, base_split in splits.items():
         logger.info(f"========== SPLIT: {split_name} ==========")
         
-        if split_name == "Random Split":
-            train_data, val_data, test_data = create_random_split(graph_classical)
-        else:
-            train_data, val_data, test_data = create_cold_protein_split(graph_classical, unique_proteins, node_to_idx)
+        train_data, val_data, test_data = with_features(base_split, x_classical)
             
         in_dim = train_data.x.size(1)
         h_dim = config["training"]["hidden_dim"]
