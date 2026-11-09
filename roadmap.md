@@ -51,7 +51,8 @@
 
 ### [x] Phase 5: Initial Ablation Study
 - Benchmarked Structure-Only (GCN), Sequence-Only (MLP), and Combined (GCN + ESM-2).
-- Key finding: Sequence features improve Random Split AUC from 0.878 to 0.887, and Cold-Protein Split AUC from 0.762 to 0.785.
+- Key finding (provisional): Sequence features improve Random Split AUC from 0.878 to 0.887, and Cold-Protein Split AUC from 0.762 to 0.785.
+- ⚠️ **Known issue (fixed in code, results pending):** the Structure-Only and ESM-2 runs each drew their own split, so they were tested on different edges/proteins. `dataset.build_splits()` now builds each split once and `with_features()` shares it across all feature settings. Corrected numbers come from the Phase 7 rerun.
 
 ---
 
@@ -81,6 +82,7 @@
   - Identify and name the top-10 hub proteins.
 - **Multi-Seed Robustness & Significance**:
   - Run main models across 5 distinct random seeds (`42, 43, 44, 45, 46`).
+  - **For each seed, call `build_splits(edges_path, seed)` once and pass the same split to every model via `with_features()`** (matched pairs are required for the paired Wilcoxon test). This rerun replaces the provisional Phase 5 numbers.
   - Report metrics as `Mean ± Std`.
   - Conduct Wilcoxon signed-rank paired significance tests comparing Structure-Only vs Structure + Sequence on test AUC.
   - Report exact p-values to validate scientific claim.

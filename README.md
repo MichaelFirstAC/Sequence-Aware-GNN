@@ -18,6 +18,10 @@ We evaluate link prediction across two rigorous regimes:
 
 ### Empirical Results (from `results/metrics.csv`):
 
+> [!WARNING]
+> **Provisional single-seed numbers.** In the original Phase 5 run, the Structure-Only and ESM-2 models were evaluated on *different* random splits (each model drew its own split), so those two rows are not a matched comparison. The code has been fixed to build each split once and share it across all feature settings. Final numbers will come from the Phase 7 rerun (5 seeds, shared splits, mean ± std, Wilcoxon test).
+> The **Structure-Only vs. Classical + Structure** rows on the Cold-Protein Split *did* use the same held-out proteins and are a fair comparison.
+
 | Model | Feature Representation | Split Strategy | ROC-AUC | F1-Score | Precision | Recall | Prec@10 |
 |:---|:---|:---|:---:|:---:|:---:|:---:|:---:|
 | **GCN** | Structure Only (Random Initialized) | Random Split | 0.8782 | 0.7104 | 0.5584 | 0.9761 | 1.0 |
@@ -35,7 +39,7 @@ We evaluate link prediction across two rigorous regimes:
 | **LogisticRegression** | Classical Sequence (Pairwise) | Cold-Protein Split | 0.6551 | 0.6091 | 0.6209 | 0.5978 | 1.0 |
 
 ### Key Scientific Insights:
-* **Inductive Generalization Boost**: When testing unseen proteins (Cold Split), Structure-Only GCN degrades to `0.7628` AUC. Injecting sequence information restores inductive capability, boosting AUC to **`0.7857` (ESM-2)** and **`0.8290` (Classical Features)**.
+* **Inductive Generalization Boost**: When testing unseen proteins (Cold Split), Structure-Only GCN degrades to `0.7628` AUC. Classical sequence features raise this to **`0.8290`** on the same held-out proteins. ESM-2 features reached `0.7857`, but that run used a different cold split, so the ESM-2 gain is **provisional until the Phase 7 rerun**.
 * **Cold-Split Homology Verification**: Using Smith-Waterman local alignment (`BLOSUM62`), we audited 125,000 pairwise alignments between held-out cold proteins and training proteins. The mean maximum identity is **23.37% ± 6.88%**, with **91.2% of test proteins sharing < 30% sequence identity** with any training protein (deep within the non-homologous twilight zone), confirming strict out-of-distribution evaluation.
 
 ---
